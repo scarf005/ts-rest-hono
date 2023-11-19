@@ -1,13 +1,16 @@
-import { checkZodSchema, parseJsonQueryObject } from "npm:@ts-rest/core@3.27.0";
-import type { AppRoute } from "npm:@ts-rest/core@3.27.0";
-import type { Context } from "https://deno.land/x/hono@v3.4.0/mod.ts";
-import type { Options } from "./ts-rest-hono.ts";
-import { RequestValidationError } from "./request-validation-error.ts";
+import {
+  checkZodSchema,
+  parseJsonQueryObject,
+} from "https://esm.sh/@ts-rest/core@3.30.5"
+import type { AppRoute } from "https://esm.sh/@ts-rest/core@3.30.5"
+import type { Context } from "https://deno.land/x/hono@v3.10.1/mod.ts"
+import type { Options } from "./ts-rest-hono.ts"
+import { RequestValidationError } from "./request-validation-error.ts"
 import {
   isJsonContentType,
   maybeTransformQueryFromSchema,
   resolveOption,
-} from "./utils.ts";
+} from "./utils.ts"
 
 /**
  * @throws - {@link RequestValidationError}
@@ -17,50 +20,50 @@ import {
 export const validateRequest = async (
   c: Context,
   schema: AppRoute,
-  options: Options
+  options: Options,
 ) => {
-  const isJsonQueryEnabled = resolveOption(options.jsonQuery, c);
+  const isJsonQueryEnabled = resolveOption(options.jsonQuery, c)
   const query = isJsonQueryEnabled
     ? parseJsonQueryObject(c.req.query())
-    : c.req.query();
+    : c.req.query()
 
-  const finalQuery = maybeTransformQueryFromSchema(schema, query, c);
-  const queryResult = checkZodSchema(finalQuery, schema.query);
+  const finalQuery = maybeTransformQueryFromSchema(schema, query, c)
+  const queryResult = checkZodSchema(finalQuery, schema.query)
 
   const paramsResult = checkZodSchema(c.req.param(), schema.pathParams, {
     passThroughExtraKeys: true,
-  });
+  })
 
   // throw new Error(`Headers are ${JSON.stringify(c.req.header(), null, 2)}`);
   const headersResult = checkZodSchema(c.req.header(), schema.headers, {
     passThroughExtraKeys: true,
-  });
+  })
 
-  let content;
-  let shouldValidateBody = false;
+  let content
+  let shouldValidateBody = false
 
-  const hasBodySchema = "body" in schema && Boolean(schema.body);
+  const hasBodySchema = "body" in schema && Boolean(schema.body)
 
   if (hasBodySchema) {
     if (isJsonContentType(c.req.header("content-type"))) {
-      shouldValidateBody = true;
-      content = await c.req.json();
+      shouldValidateBody = true
+      content = await c.req.json()
     } else {
-      const text = await c.req.text();
+      const text = await c.req.text()
       try {
-        content = JSON.parse(text);
-        shouldValidateBody = true;
+        content = JSON.parse(text)
+        shouldValidateBody = true
       } catch (err) {
         throw new Error(
-          "Error parsing the body contents. Please set the content-type header."
-        );
+          "Error parsing the body contents. Please set the content-type header.",
+        )
       }
     }
   }
 
   const bodyResult = shouldValidateBody
     ? checkZodSchema(content, hasBodySchema && schema.body)
-    : { success: true, error: null, data: null };
+    : { success: true, error: null, data: null }
 
   if (
     !paramsResult.success ||
@@ -72,8 +75,8 @@ export const validateRequest = async (
       !paramsResult.success ? paramsResult.error : null,
       !headersResult.success ? headersResult.error : null,
       !queryResult.success ? queryResult.error : null,
-      !bodyResult.success ? bodyResult.error : null
-    );
+      !bodyResult.success ? bodyResult.error : null,
+    )
   }
 
   return {
@@ -81,8 +84,8 @@ export const validateRequest = async (
     headers: headersResult.data,
     query: queryResult.data,
     body: bodyResult.data,
-  };
-};
+  }
+}
 
 export const combinedRequestValidationErrorHandler = ({
   pathParams: pathParamsErrors,
@@ -92,4 +95,4 @@ export const combinedRequestValidationErrorHandler = ({
 }: RequestValidationError) => ({
   error: { pathParamsErrors, headersErrors, queryErrors, bodyErrors },
   status: 400,
-});
+})

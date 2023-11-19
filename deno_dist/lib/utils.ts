@@ -1,39 +1,39 @@
 import {
-  isZodObject,
   type AppRouteMutation,
   type AppRouteQuery,
   extractZodObjectShape,
   GetFieldType,
-} from "npm:@ts-rest/core@3.27.0";
-import type { Context } from "https://deno.land/x/hono@v3.4.0/mod.ts";
-import { ResolvableOption } from "./ts-rest-hono.ts";
-import { z } from "https://deno.land/x/zod@v3.21.4/mod.ts";
+  isZodObject,
+} from "https://esm.sh/@ts-rest/core@3.30.5"
+import type { Context } from "https://deno.land/x/hono@v3.10.1/mod.ts"
+import { ResolvableOption } from "./ts-rest-hono.ts"
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts"
 
 export function getValue<
   TData,
   TPath extends string,
-  TDefault = GetFieldType<TData, TPath>
+  TDefault = GetFieldType<TData, TPath>,
 >(
   data: TData,
   path: TPath,
-  defaultValue?: TDefault
+  defaultValue?: TDefault,
 ): GetFieldType<TData, TPath> | TDefault {
   const value = path
     .split(/[.[\]]/)
     .filter(Boolean)
     .reduce<GetFieldType<TData, TPath>>(
       (value, key) => (value as any)?.[key],
-      data as any
-    );
+      data as any,
+    )
 
-  return value !== undefined ? value : (defaultValue as TDefault);
+  return value !== undefined ? value : (defaultValue as TDefault)
 }
 
 export function resolveOption(
   option: ResolvableOption,
-  c: Context<any> = {} as any
+  c: Context<any> = {} as any,
 ) {
-  return typeof option === "function" ? option(c) : option;
+  return typeof option === "function" ? option(c) : option
 }
 
 /**
@@ -48,9 +48,9 @@ export function resolveOption(
 export function maybeTransformQueryFromSchema(
   schema: AppRouteQuery | AppRouteMutation,
   query: Record<string, any>,
-  c: Context<any>
+  c: Context<any>,
 ) {
-  let result = Object.assign({}, query);
+  let result = Object.assign({}, query)
 
   if (isZodObject(schema.query)) {
     Object.entries(extractZodObjectShape(schema.query)).forEach(
@@ -61,14 +61,14 @@ export function maybeTransformQueryFromSchema(
             zodSchema._def.innerType instanceof z.ZodArray)
         ) {
           // We need to call .queries() for known array keys, otherwise they come back as one string even if there are multiple entries
-          result[key] = c.req.queries(key);
+          result[key] = c.req.queries(key)
         }
-      }
-    );
+      },
+    )
   }
 
-  return result;
+  return result
 }
 
 export const isJsonContentType = (contentType = "") =>
-  /*applicat*/ /ion\/(vnd\.api\+)?json/.test(contentType);
+  /*applicat*/ /ion\/(vnd\.api\+)?json/.test(contentType)
